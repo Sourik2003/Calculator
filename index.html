@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Neon Glass Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #050816;
+      --primary: #7b5cff;
+      --accent: #ff6ec7;
+      --text: #f8f8ff;
+      --subtle: #8a8fa6;
+      --danger: #ff4b5c;
+      --glass: rgba(15, 23, 42, 0.75);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.7);
+      --border-glass: 1px solid rgba(148, 163, 184, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter",
+        "SF Pro Text", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #231b5a 0, #050816 45%, #000 100%);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* Floating gradient blobs in background */
+    .bg-orb {
+      position: fixed;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      filter: blur(52px);
+      z-index: -1;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .bg-orb.orb-1 {
+      background: #7b5cff;
+      top: -60px;
+      left: -60px;
+      animation: float1 18s infinite alternate ease-in-out;
+    }
+
+    .bg-orb.orb-2 {
+      background: #ff6ec7;
+      bottom: -120px;
+      right: -40px;
+      animation: float2 22s infinite alternate ease-in-out;
+    }
+
+    @keyframes float1 {
+      from {
+        transform: translate(0, 0) scale(1);
+      }
+      to {
+        transform: translate(40px, 60px) scale(1.05);
+      }
+    }
+
+    @keyframes float2 {
+      from {
+        transform: translate(0, 0) scale(1.05);
+      }
+      to {
+        transform: translate(-40px, -80px) scale(1);
+      }
+    }
+
+    .calc-wrapper {
+      width: min(360px, 96vw);
+      backdrop-filter: blur(22px) saturate(160%);
+      -webkit-backdrop-filter: blur(22px) saturate(160%);
+      background: linear-gradient(
+          135deg,
+          rgba(148, 163, 184, 0.25),
+          rgba(15, 23, 42, 0.95)
+        ),
+        var(--glass);
+      border-radius: var(--radius-xl);
+      border: var(--border-glass);
+      box-shadow: var(--shadow-soft);
+      padding: 18px 18px 22px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .calc-accent-ring {
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+      border: 1px solid transparent;
+      background: linear-gradient(
+        135deg,
+        rgba(123, 92, 255, 0.8),
+        rgba(255, 110, 199, 0.8)
+      );
+      mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      mask-composite: exclude;
+      -webkit-mask-composite: xor;
+      padding: 2px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .calc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+
+    .calc-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .calc-title-main {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .title-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #fff, #7b5cff);
+      box-shadow: 0 0 12px rgba(123, 92, 255, 0.9);
+    }
+
+    .calc-title-sub {
+      font-size: 0.7rem;
+      color: var(--subtle);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chip {
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.35), rgba(15, 23, 42, 0.9));
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chip-pill {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(248, 250, 252, 0.4);
+      background: radial-gradient(circle at 30% 30%, #fff, #38bdf8);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.9);
+    }
+
+    .theme-toggle {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: radial-gradient(circle at 30% 20%, #e0f2fe, #020617);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.9rem;
+      box-shadow: 0 0 8px rgba(148, 163, 184, 0.7);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+    .theme-toggle:hover {
+      transform: translateY(-1px) scale(1.03);
+      box-shadow: 0 0 14px rgba(148, 163, 184, 0.9);
+      filter: brightness(1.1);
+    }
+
+    .theme-toggle:active {
+      transform: scale(0.96);
+      box-shadow: inset 0 0 6px rgba(15, 23, 42, 0.9);
+    }
+
+    .calc-display {
+      border-radius: var(--radius-lg);
+      padding: 14px 14px 10px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: linear-gradient(
+        135deg,
+        rgba(15, 23, 42, 0.95),
+        rgba(15, 23, 42, 0.9)
+      );
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.7);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .display-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 80% -20%, rgba(123, 92, 255, 0.5), transparent 60%);
+      opacity: 0.8;
+      pointer-events: none;
+    }
+
+    .display-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .display-expression {
+      font-size: 0.8rem;
+      min-height: 18px;
+      color: var(--subtle);
+      text-align: right;
+      word-wrap: break-word;
+      opacity: 0.9;
+    }
+
+    .display-main {
+      margin-top: 4px;
+      font-size: 1.9rem;
+      line-height: 1.2;
+      font-weight: 500;
+      text-align: right;
+      word-wrap: break-word;
+      word-break: break-all;
+    }
+
+    .display-mode-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 5px;
+      font-size: 0.65rem;
+      color: var(--subtle);
+      opacity: 0.9;
+    }
+
+    .display-mode-row span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .dot-pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+      animation: pulse 1.4s infinite ease-out;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1.7);
+        opacity: 0;
+      }
+    }
+
+    .calc-main {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 10px;
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      align-content: start;
+    }
+
+    .btn {
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 12px 0;
+      font-size: 1rem;
+      font-weight: 500;
+      background: radial-gradient(circle at top, rgba(148, 163, 184, 0.35), rgba(15, 23, 42, 0.95));
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: 0 12px 25px rgba(15, 23, 42, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+      transition:
+        transform 0.1s ease,
+        box-shadow 0.1s ease,
+        filter 0.12s ease,
+        border-color 0.12s ease,
+        background 0.12s ease;
+    }
+
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle at 30% 0%,
+        rgba(248, 250, 252, 0.55),
+        transparent 55%
+      );
+      opacity: 0;
+      transition: opacity 0.18s ease;
+      pointer-events: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 22px rgba(15, 23, 42, 0.95);
+      filter: brightness(1.06);
+    }
+
+    .btn:active,
+    .btn.btn-active {
+      transform: translateY(2px) scale(0.97);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.9);
+      filter: brightness(0.97);
+    }
+
+    .btn:active::after,
+    .btn.btn-active::after {
+      opacity: 0.5;
+    }
+
+    .btn-ghost {
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95));
+      border-style: dashed;
+      font-size: 0.9rem;
+      color: var(--subtle);
+    }
+
+    .btn-operator {
+      background: radial-gradient(circle at 10% -10%, #ffedd5, rgba(15, 23, 42, 0.95));
+      border-color: rgba(253, 186, 116, 0.9);
+      box-shadow: 0 12px 26px rgba(248, 113, 113, 0.35);
+    }
+
+    .btn-operator span {
+      background: linear-gradient(135deg, #f97316, #fb7185);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, #7b5cff, #ff6ec7);
+      border-color: rgba(251, 113, 133, 0.9);
+      box-shadow: 0 12px 30px rgba(251, 113, 133, 0.65);
+    }
+
+    .btn-accent span {
+      text-shadow: 0 0 12px rgba(15, 23, 42, 0.9);
+    }
+
+    .btn-danger {
+      border-color: rgba(248, 113, 113, 0.8);
+      background: radial-gradient(circle at top, rgba(248, 113, 113, 0.8), rgba(15, 23, 42, 0.98));
+      box-shadow: 0 12px 24px rgba(248, 113, 113, 0.4);
+    }
+
+    .btn-danger span {
+      color: #fef2f2;
+      font-weight: 600;
+    }
+
+    .btn-wide {
+      grid-column: span 2;
+    }
+
+    /* History panel */
+    .history-panel {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: linear-gradient(
+        135deg,
+        rgba(15, 23, 42, 0.98),
+        rgba(30, 64, 175, 0.9)
+      );
+      padding: 8px 9px;
+      font-size: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 260px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .history-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .history-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #eff6ff, #22c55e);
+      box-shadow: 0 0 10px rgba(22, 163, 74, 0.9);
+    }
+
+    .history-title span {
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.64rem;
+      color: #c7d2fe;
+    }
+
+    .history-buttons {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .history-toggle {
+      border-radius: var(--radius-pill);
+      padding: 3px 7px;
+      border: 1px solid rgba(191, 219, 254, 0.8);
+      background: radial-gradient(circle at 30% 0%, rgba(191, 219, 254, 0.65), rgba(15, 23, 42, 0.98));
+      font-size: 0.65rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #0f172a;
+      font-weight: 600;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    }
+
+    .history-toggle:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 14px rgba(129, 140, 248, 0.9);
+      filter: brightness(1.05);
+    }
+
+    .history-toggle:active {
+      transform: translateY(1px) scale(0.97);
+      box-shadow: 0 0 6px rgba(37, 99, 235, 0.8);
+    }
+
+    .history-clear {
+      border-radius: var(--radius-pill);
+      padding: 3px 8px;
+      border: 1px dashed rgba(248, 250, 252, 0.6);
+      background: transparent;
+      font-size: 0.64rem;
+      cursor: pointer;
+      color: rgba(248, 250, 252, 0.7);
+      transition: opacity 0.12s ease, transform 0.12s ease;
+    }
+
+    .history-clear:hover {
+      opacity: 1;
+      transform: translateY(-0.5px);
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 2px;
+      transition: max-height 0.18s ease;
+    }
+
+    .history-list.empty-state {
+      color: rgba(226, 232, 240, 0.7);
+      font-size: 0.7rem;
+      font-style: italic;
+    }
+
+    .history-item {
+      padding: 5px 6px;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    }
+
+    .history-item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 14px rgba(15, 23, 42, 0.95);
+      border-color: rgba(129, 140, 248, 0.9);
+      background: radial-gradient(circle at 0 0, rgba(129, 140, 248, 0.6), rgba(15, 23, 42, 0.98));
+    }
+
+    .history-item-expression {
+      font-size: 0.68rem;
+      color: rgba(148, 163, 184, 0.9);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item-result {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #e0f2fe;
+      text-align: right;
+    }
+
+    .history-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .history-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .history-list::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.65);
+      border-radius: 999px;
+    }
+
+    /* Compact on small screens */
+    @media (max-width: 420px) {
+      .calc-wrapper {
+        padding: 14px 14px 18px;
+        border-radius: 20px;
+      }
+
+      .calc-main {
+        grid-template-columns: 1fr;
+      }
+
+      .history-panel {
+        margin-top: 6px;
+        max-height: 150px;
+      }
+    }
+
+    /* Light theme override */
+    body.light {
+      background: radial-gradient(circle at top, #e5e7eb 0, #f9fafb 55%, #dbeafe 100%);
+    }
+
+    body.light .calc-wrapper {
+      background: linear-gradient(
+          135deg,
+          rgba(248, 250, 252, 0.9),
+          rgba(219, 234, 254, 0.98)
+        ),
+        rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+    }
+
+    body.light .calc-display {
+      background: linear-gradient(
+        135deg,
+        rgba(248, 250, 252, 0.95),
+        rgba(219, 234, 254, 0.9)
+      );
+      box-shadow: inset 0 0 0 1px rgba(226, 232, 240, 0.9);
+    }
+
+    body.light .display-glow {
+      background: radial-gradient(circle at 80% -20%, rgba(129, 140, 248, 0.4), transparent 65%);
+    }
+
+    body.light .history-panel {
+      background: linear-gradient(
+        135deg,
+        rgba(239, 246, 255, 0.98),
+        rgba(219, 234, 254, 0.98)
+      );
+    }
+
+    body.light .btn {
+      background: radial-gradient(circle at top, rgba(226, 232, 240, 0.9), rgba(226, 232, 240, 0.95));
+      box-shadow: 0 12px 20px rgba(148, 163, 184, 0.55);
+      color: #0f172a;
+    }
+
+    body.light .btn-ghost {
+      background: rgba(248, 250, 252, 0.95);
+    }
+
+    body.light .btn-operator {
+      background: radial-gradient(circle at top, #fed7aa, #fee2e2);
+    }
+
+    body.light .btn-danger {
+      background: radial-gradient(circle at top, #fecaca, #fee2e2);
+    }
+
+    body.light .history-item {
+      background: rgba(248, 250, 252, 0.98);
+    }
+
+    body.light .history-item-result {
+      color: #0f172a;
+    }
+
+    body.light .chip {
+      background: rgba(226, 232, 240, 0.9);
+      color: #0f172a;
+    }
+
+    body.light .calc-title-sub {
+      color: #6b7280;
+    }
+
+    body.light .display-expression {
+      color: #6b7280;
+    }
+
+    body.light .display-mode-row {
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <!-- background orbs -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <div class="calc-wrapper" id="calc-root">
+    <div class="calc-accent-ring"></div>
+
+    <div class="calc-header">
+      <div class="calc-title">
+        <div class="calc-title-main">
+          <div class="title-dot"></div>
+          NEON GLASS CALC
+        </div>
+        <div class="calc-title-sub">
+          Click • Tap • Type – it listens to your keyboard too
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="chip">
+          <span class="chip-pill"></span>
+          <span>Smart&nbsp;Mode</span>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" title="Toggle dark / light">
+          ☾
+        </button>
+      </div>
+    </div>
+
+    <div class="calc-display">
+      <div class="display-glow"></div>
+      <div class="display-inner">
+        <div class="display-expression" id="expression-display">
+          0
+        </div>
+        <div class="display-main" id="main-display">
+          0
+        </div>
+        <div class="display-mode-row">
+          <span><span class="dot-pulse"></span> LIVE</span>
+          <span id="hint-text">Try: 12.5 × 4 + 3</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="calc-main">
+      <!-- keypad -->
+      <div class="keypad" id="keypad">
+        <button class="btn btn-danger" data-action="clear-all"><span>AC</span></button>
+        <button class="btn btn-ghost" data-action="backspace"><span>⌫</span></button>
+        <button class="btn btn-ghost" data-value="%"><span>%</span></button>
+        <button class="btn btn-operator" data-value="/"><span>÷</span></button>
+
+        <button class="btn" data-value="7"><span>7</span></button>
+        <button class="btn" data-value="8"><span>8</span></button>
+        <button class="btn" data-value="9"><span>9</span></button>
+        <button class="btn btn-operator" data-value="*"><span>×</span></button>
+
+        <button class="btn" data-value="4"><span>4</span></button>
+        <button class="btn" data-value="5"><span>5</span></button>
+        <button class="btn" data-value="6"><span>6</span></button>
+        <button class="btn btn-operator" data-value="-"><span>−</span></button>
+
+        <button class="btn" data-value="1"><span>1</span></button>
+        <button class="btn" data-value="2"><span>2</span></button>
+        <button class="btn" data-value="3"><span>3</span></button>
+        <button class="btn btn-operator" data-value="+"><span>+</span></button>
+
+        <button class="btn" data-action="toggle-sign"><span>±</span></button>
+        <button class="btn" data-value="0"><span>0</span></button>
+        <button class="btn" data-value="."><span>.</span></button>
+        <button class="btn btn-accent" data-action="equals"><span>=</span></button>
+      </div>
+
+      <!-- history -->
+      <div class="history-panel">
+        <div class="history-header">
+          <div class="history-title">
+            <div class="history-dot"></div>
+            <span>HISTORY</span>
+          </div>
+          <div class="history-buttons">
+            <button class="history-toggle" id="history-toggle">
+              ▼
+              <span id="history-toggle-label">Collapse</span>
+            </button>
+            <button class="history-clear" id="history-clear" title="Clear history">
+              Clear
+            </button>
+          </div>
+        </div>
+        <div class="history-list empty-state" id="history-list">
+          No calculations yet. Your story starts with the first “=”.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const expressionDisplay = document.getElementById("expression-display");
+      const mainDisplay = document.getElementById("main-display");
+      const keypad = document.getElementById("keypad");
+      const historyList = document.getElementById("history-list");
+      const historyToggleBtn = document.getElementById("history-toggle");
+      const historyToggleLabel = document.getElementById("history-toggle-label");
+      const historyClearBtn = document.getElementById("history-clear");
+      const themeToggleBtn = document.getElementById("theme-toggle");
+      const hintText = document.getElementById("hint-text");
+
+      let expression = "";
+      let lastResult = null;
+      let justEvaluated = false;
+      let historyExpanded = true;
+      const hints = [
+        "Tip: Press keyboard keys – it works!",
+        "Try: (25 + 5) × 3",
+        "Use % for percentages, e.g. 50% of 200",
+        "Tip: Use Backspace to delete",
+        "Press Enter to get the answer",
+      ];
+      let hintIndex = 0;
+
+      function cycleHint() {
+        hintIndex = (hintIndex + 1) % hints.length;
+        hintText.textContent = hints[hintIndex];
+      }
+
+      setInterval(cycleHint, 6500);
+
+      function updateDisplays() {
+        expressionDisplay.textContent = expression || "0";
+        if (expression === "" && lastResult != null) {
+          mainDisplay.textContent = lastResult;
+        } else if (expression === "") {
+          mainDisplay.textContent = "0";
+        }
+      }
+
+      function appendValue(value) {
+        if (justEvaluated && /[0-9.]/.test(value)) {
+          expression = "";
+          lastResult = null;
+        }
+        justEvaluated = false;
+
+        const lastChar = expression.slice(-1);
+
+        if (value === ".") {
+          const parts = expression.split(/[\+\-\*\/%]/);
+          const currentPart = parts[parts.length - 1];
+          if (currentPart.includes(".")) {
+            return;
+          }
+        }
+
+        if (/[+\-*/%]/.test(value)) {
+          if (expression === "" && lastResult != null) {
+            expression = String(lastResult);
+          }
+          if (/[+\-*/%]/.test(lastChar)) {
+            expression = expression.slice(0, -1) + value;
+          } else if (expression !== "") {
+            expression += value;
+          }
+        } else {
+          expression += value;
+        }
+
+        updateDisplays();
+      }
+
+      function clearAll() {
+        expression = "";
+        lastResult = null;
+        justEvaluated = false;
+        updateDisplays();
+      }
+
+      function backspace() {
+        if (justEvaluated) {
+          expression = "";
+          justEvaluated = false;
+        } else {
+          expression = expression.slice(0, -1);
+        }
+        updateDisplays();
+      }
+
+      function toggleSign() {
+        if (!expression) {
+          if (lastResult != null) {
+            lastResult = -lastResult;
+            mainDisplay.textContent = lastResult;
+          }
+          return;
+        }
+
+        const tokens = expression.match(/(\d+(\.\d+)?|\D)/g) || [];
+        if (!tokens.length) return;
+
+        let lastNumberIndex = -1;
+        for (let i = tokens.length - 1; i >= 0; i--) {
+          if (/^\d+(\.\d+)?$/.test(tokens[i])) {
+            lastNumberIndex = i;
+            break;
+          }
+        }
+        if (lastNumberIndex === -1) return;
+
+        if (lastNumberIndex > 0 && tokens[lastNumberIndex - 1] === "-") {
+          if (lastNumberIndex === 1 || /[+\-*/%]/.test(tokens[lastNumberIndex - 2])) {
+            tokens.splice(lastNumberIndex - 1, 1);
+          } else {
+            tokens.splice(lastNumberIndex, 0, "*", "-1");
+          }
+        } else if (
+          lastNumberIndex === 0 ||
+          /[+\-*/%]/.test(tokens[lastNumberIndex - 1])
+        ) {
+          tokens.splice(lastNumberIndex, 0, "-");
+        } else {
+          tokens.splice(lastNumberIndex, 0, "*", "-1");
+        }
+
+        expression = tokens.join("");
+        updateDisplays();
+      }
+
+      function safeEval(expr) {
+        const safeExpr = expr.replace(/[^0-9+\-*/%.() ]/g, "");
+        try {
+          const fn = new Function("return " + safeExpr);
+          const result = fn();
+          if (typeof result === "number" && isFinite(result)) {
+            return result;
+          }
+          return null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function evaluateExpression() {
+        if (!expression && lastResult != null) {
+          return lastResult;
+        }
+
+        if (!expression) return null;
+
+        const normalized = expression.replace(
+          /(\d+(\.\d+)?)%/g,
+          "(($1)/100)"
+        );
+
+        const result = safeEval(normalized);
+        if (result == null) {
+          mainDisplay.textContent = "Error";
+          justEvaluated = true;
+          return null;
+        }
+
+        const rounded = Math.round(result * 1e10) / 1e10;
+        const finalResult =
+          Math.abs(rounded) > 1e9 || (Math.abs(rounded) < 1e-6 && rounded !== 0)
+            ? rounded.toExponential(6)
+            : rounded.toString();
+
+        lastResult = finalResult;
+        mainDisplay.textContent = finalResult;
+        justEvaluated = true;
+
+        addToHistory(expression, finalResult);
+        expression = "";
+        expressionDisplay.textContent = finalResult;
+
+        return finalResult;
+      }
+
+      function addToHistory(expr, res) {
+        if (!historyList) return;
+
+        if (historyList.classList.contains("empty-state")) {
+          historyList.classList.remove("empty-state");
+          historyList.textContent = "";
+        }
+
+        const item = document.createElement("div");
+        item.className = "history-item";
+        item.innerHTML = `
+          <div class="history-item-expression">${expr}</div>
+          <div class="history-item-result">${res}</div>
+        `;
+        item.addEventListener("click", () => {
+          expression = expr;
+          lastResult = res;
+          justEvaluated = false;
+          updateDisplays();
+        });
+
+        historyList.prepend(item);
+
+        const maxItems = 15;
+        while (historyList.children.length > maxItems) {
+          historyList.removeChild(historyList.lastChild);
+        }
+      }
+
+      function toggleHistory() {
+        historyExpanded = !historyExpanded;
+        if (historyExpanded) {
+          historyList.style.maxHeight = "200px";
+          historyList.style.opacity = "1";
+          historyToggleLabel.textContent = "Collapse";
+          historyToggleBtn.firstChild.textContent = "▼";
+        } else {
+          historyList.style.maxHeight = "0px";
+          historyList.style.opacity = "0";
+          historyToggleLabel.textContent = "Expand";
+          historyToggleBtn.firstChild.textContent = "▲";
+        }
+      }
+
+      function clearHistory() {
+        if (!historyList) return;
+        historyList.innerHTML =
+          "No calculations yet. Your story starts with the first “=”.";
+        historyList.classList.add("empty-state");
+      }
+
+      function handleButtonClick(e) {
+        const btn = e.target.closest(".btn");
+        if (!btn) return;
+
+        const value = btn.getAttribute("data-value");
+        const action = btn.getAttribute("data-action");
+
+        btn.classList.add("btn-active");
+        setTimeout(() => btn.classList.remove("btn-active"), 120);
+
+        if (value != null) {
+          appendValue(value);
+        } else if (action) {
+          if (action === "clear-all") {
+            clearAll();
+          } else if (action === "backspace") {
+            backspace();
+          } else if (action === "equals") {
+            evaluateExpression();
+          } else if (action === "toggle-sign") {
+            toggleSign();
+          }
+        }
+      }
+
+      function handleKeydown(e) {
+        const key = e.key;
+
+        if (/\d/.test(key)) {
+          appendValue(key);
+          flashButton('[data-value="' + key + '"]');
+        } else if (key === "." || key === ",") {
+          appendValue(".");
+          flashButton('[data-value="."]');
+        } else if (key === "+" || key === "-" || key === "*" || key === "/") {
+          appendValue(key);
+          flashButton('[data-value="' + key + '"]');
+        } else if (key === "Enter" || key === "=") {
+          e.preventDefault();
+          evaluateExpression();
+          flashButton('[data-action="equals"]');
+        } else if (key === "Backspace") {
+          backspace();
+          flashButton('[data-action="backspace"]');
+        } else if (key === "Delete") {
+          clearAll();
+          flashButton('[data-action="clear-all"]');
+        } else if (key === "%") {
+          appendValue("%");
+          flashButton('[data-value="%"]');
+        }
+      }
+
+      function flashButton(selector) {
+        const btn = keypad.querySelector(selector);
+        if (!btn) return;
+        btn.classList.add("btn-active");
+        setTimeout(() => btn.classList.remove("btn-active"), 120);
+      }
+
+      function toggleTheme() {
+        const isLight = document.body.classList.toggle("light");
+        themeToggleBtn.textContent = isLight ? "☀" : "☾";
+      }
+
+      keypad.addEventListener("click", handleButtonClick);
+      document.addEventListener("keydown", handleKeydown);
+      historyToggleBtn.addEventListener("click", toggleHistory);
+      historyClearBtn.addEventListener("click", clearHistory);
+      themeToggleBtn.addEventListener("click", toggleTheme);
+
+      updateDisplays();
+    })();
+  </script>
+</body>
+</html>
